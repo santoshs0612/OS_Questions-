@@ -1,0 +1,67 @@
+
+
+
+/******************************************************************************
+ TOPIC: Condition Variable for two purpose
+ Important Points : CV are used for two purpose
+ A. Notify other thread.
+ B. Waiting for some conditions
+ 
+ 1. Condition Variable allows running thread to wait on some conditions and once those conditions are met the waiting thread 
+ is notified using:
+    a. notify_one();
+    b. notify_all();
+
+2. You need mutex to use condition varible.
+3. If some thread want to wait on some condition then it has to do those things:
+    a. Acquire the mutex lock using std::unique_lock<std::mutex> lock(m);
+    b. Execute wait , wait_for, or wait_untill. The wait operation atomically release the mutex 
+    and suspend the execution of the thread.
+    c. When the condition varible is notified, the thread is awakened, and the mutex is atomatically reacquired.
+    the thread shold then check the condition and resume waiting if wake up was spurious.
+
+NOTE: 
+1. Condition Variable are used to synchronize two or ore thread.
+2. Best use case of condition variable is Producer/Consumer problem
+
+*******************************************************************************/
+#include <bits/stdc++.h>
+#include <thread>
+#include<mutex>
+#include<condition_variable>
+using namespace std;
+condition_variable cv;
+mutex m;
+int balance=0;
+void addMoney(int money)
+{
+    lock_guard<mutex> lg(m);
+    balance+= money;
+    cout<<"Amount Added Current Balance: "<< balance<<endl;
+    cv.notify_one();
+}
+
+void withdrownMoney(int money)
+{
+    unique_lock<mutex> ul(m);
+    cv.wait(ul,[] {return (balance!=0)? true:false;});
+    if(balance>=money)
+    {
+        balance-=money;
+        cout<<"Amount Deducted: "<< money<<endl;
+    }
+    else 
+    {
+        cout<<"Amount can't be Deducted, Current balance is less then"<<money<<endl;
+    }
+    cout<<"Current Balcne is "<< balance<<endl;
+}
+int main()
+{
+    thread t1(withdrownMoney,500);
+    thread t2(addMoney,500);
+    t1.join();
+    t2.join();
+
+    return 0;
+}
