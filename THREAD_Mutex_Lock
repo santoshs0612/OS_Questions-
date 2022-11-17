@@ -1,0 +1,29 @@
+
+#include <iostream>
+#include <thread>
+#include <vector>
+#include<bits/stdc++.h>
+
+using namespace std;
+
+mutex mu;
+int amount=0;
+void add_Money(int amount)
+{
+
+        mu.lock();
+        amount+=1;
+        mu.unlock();
+}
+
+int main()
+{
+    cout<<amount<<endl;
+    thread t1(add_Money, -500);
+    thread t2(add_Money,200);
+    t1.join();
+    t2.join();
+
+    cout<<amount;
+    return 0;
+}
